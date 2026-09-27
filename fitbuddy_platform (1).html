@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08111f">
+<title>FitBuddy — Personal Fitness & AI Coach</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #08111f;
+  --panel: #101b2d;
+  --panel2: #0c1626;
+  --line: #223149;
+  --text: #f7fafc;
+  --muted: #8ea0b8;
+  --brand: #35d07f;
+  --brand2: #1fb66a;
+  --brand-light: rgba(53, 208, 127, 0.15);
+  --shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 10% 0%, #12243b 0%, #08111f 38%, #060d18 100%);
+  color: var(--text);
+  min-height: 100vh;
+}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #0c1626; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #223149; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #35d07f; }
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes typingDot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.1); }
+}
+.typing-dot { animation: typingDot 1.4s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.page { display: none; }
+.page.active { display: block; }
+.nav-btn.active { background-color: var(--brand); color: #062012; font-weight: 800; }
+.mobile-nav-btn.active { color: var(--brand); border-bottom: 2px solid var(--brand); }
+
+.card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.card-hover:hover { transform: translateY(-3px); border-color: rgba(53, 208, 127, 0.4); box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
+
+/* Video Embed Wrapper */
+.video-responsive { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; }
+.video-responsive iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+</style>
+</head>
+<body class="bg-[#08111f] text-slate-100 min-h-screen flex flex-col">
+
+<div id="app" class="app min-h-screen flex flex-col hidden">
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-[#08111f]/90 backdrop-blur-md border-b border-[#223149]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="h-18 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchPage('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#35d07f] to-[#0e8f58] flex items-center justify-center shadow-lg shadow-[#35d07f]/20 font-black text-xl">
+            💪
+          </div>
+          <span class="font-extrabold text-xl tracking-tight text-white">FitBuddy</span>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center gap-1 bg-[#0b1525] border border-[#223149] p-1.5 rounded-xl text-sm font-semibold">
+          <button data-page="dashboard" class="nav-btn px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">Dashboard</button>
+          <button data-page="workouts" class="nav-btn px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">Workouts</button>
+          <button data-page="videos" class="nav-btn px-4 py-2 rounded-lg text-slate-400 hover:text-white transition">Video Library</button>
+          <button data-page="coach" class="nav-btn px-4 py-2 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <span>🤖 AI Coach</span>
+          </button>
+        </nav>
+
+        <!-- Profile Chip & Sign Out -->
+        <div class="flex items-center gap-2">
+          <button id="profileBtn" class="flex items-center gap-2.5 bg-[#0d1829] border border-[#223149] hover:border-[#35d07f]/50 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-200 transition">
+            <span id="avatar" class="w-7 h-7 rounded-full bg-[#1d7650] text-white flex items-center justify-center font-bold">?</span>
+            <span id="profileName" class="hidden sm:inline-block max-w-[100px] truncate">User</span>
+            <span class="text-slate-400 text-xs">⚙️</span>
+          </button>
+          <button id="logoutBtn" title="Sign Out" class="p-2 text-slate-400 hover:text-red-400 hover:bg-[#132238] border border-[#223149] rounded-xl text-xs transition">
+            🚪
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#08111f]/95 backdrop-blur-lg border-t border-[#223149] px-2 py-2 flex justify-around">
+    <button data-page="dashboard" class="mobile-nav-btn flex-1 py-1.5 flex flex-col items-center gap-1 text-xs font-bold text-slate-400">
+      <span>⌂</span><span>Dashboard</span>
+    </button>
+    <button data-page="workouts" class="mobile-nav-btn flex-1 py-1.5 flex flex-col items-center gap-1 text-xs font-bold text-slate-400">
+      <span>🏋️</span><span>Workouts</span>
+    </button>
+    <button data-page="videos" class="mobile-nav-btn flex-1 py-1.5 flex flex-col items-center gap-1 text-xs font-bold text-slate-400">
+      <span>📹</span><span>Videos</span>
+    </button>
+    <button data-page="coach" class="mobile-nav-btn flex-1 py-1.5 flex flex-col items-center gap-1 text-xs font-bold text-slate-400">
+      <span>🤖</span><span>Coach</span>
+    </button>
+  </div>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
+    <!-- PAGE: DASHBOARD -->
+    <section id="page-dashboard" class="page active animate-fade-in space-y-6">
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-2xl border border-[#223149] bg-gradient-to-r from-[#101b2d] via-[#0c1626] to-[#0d1e33] p-6 sm:p-8">
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
+        <div class="relative z-10 max-w-2xl space-y-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#35d07f]/10 text-[#8df2b7] border border-[#35d07f]/30">
+            <span class="w-2 h-2 rounded-full bg-[#35d07f] animate-pulse"></span> Personal Fitness Hub
+          </span>
+          <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            Welcome back, <span id="dashName" class="text-[#35d07f]">Buddy</span>!
+          </h1>
+          <p id="heroText" class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Loading fitness profile details...
+          </p>
+          <div class="pt-2 flex flex-wrap gap-3">
+            <button id="heroActionBtn" onclick="openProfileModal()" class="px-5 py-2.5 bg-[#35d07f] hover:bg-[#5ae495] text-[#062012] font-extrabold text-sm rounded-xl transition shadow-lg shadow-[#35d07f]/20">
+              Complete Profile
+            </button>
+            <button onclick="switchPage('coach')" class="px-5 py-2.5 bg-[#132238] hover:bg-[#1c3252] border border-[#223149] text-slate-200 font-bold text-sm rounded-xl transition">
+              💬 Talk with AI Coach
+            </button>
+            <button onclick="switchPage('videos')" class="px-5 py-2.5 bg-[#132238] hover:bg-[#1c3252] border border-[#223149] text-slate-200 font-bold text-sm rounded-xl transition">
+              🎬 Fitness Tutorials
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Daily Calories -->
+        <div class="bg-[#101b2d] border border-[#223149] rounded-2xl p-4 card-hover">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+            <span>Calories</span>
+            <span>🔥</span>
+          </div>
+          <div id="calories" class="text-2xl sm:text-3xl font-black text-white mt-2">—</div>
+          <div class="text-xs text-slate-400 mt-1">Daily Target</div>
+        </div>
+
+        <!-- Protein Target -->
+        <div class="bg-[#101b2d] border border-[#223149] rounded-2xl p-4 card-hover">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+            <span>Protein</span>
+            <span>🥩</span>
+          </div>
+          <div id="protein" class="text-2xl sm:text-3xl font-black text-white mt-2">—</div>
+          <div class="text-xs text-slate-400 mt-1">Target Per Day</div>
+        </div>
+
+        <!-- Interactive Water Tracker -->
+        <div class="bg-[#101b2d] border border-[#223149] rounded-2xl p-4 card-hover">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+            <span>Water Intake</span>
+            <span>💧</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-black text-cyan-400 mt-2">
+            <span id="waterVal">0.0</span> <span class="text-sm font-semibold text-slate-400">/ 3.0 L</span>
+          </div>
+          <div class="mt-2 flex items-center gap-1.5">
+            <button onclick="addWater(0.25)" title="Add 250ml" class="px-2 py-1 bg-[#132238] hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold transition">+250ml</button>
+            <button onclick="addWater(0.50)" title="Add 500ml" class="px-2 py-1 bg-[#132238] hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold transition">+500ml</button>
+            <button onclick="resetWater()" title="Reset Water" class="p-1 bg-[#132238] hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-[#223149] rounded-lg text-xs font-bold transition">↺</button>
+          </div>
+        </div>
+
+        <!-- Goal / Profile -->
+        <div class="bg-[#101b2d] border border-[#223149] rounded-2xl p-4 card-hover">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+            <span>Current Goal</span>
+            <span>🎯</span>
+          </div>
+          <div id="goal" class="text-xl sm:text-2xl font-black text-white mt-2 capitalize">—</div>
+          <div id="weight" class="text-xs text-slate-400 mt-1">No Body Data</div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Daily Routine Quick Overview -->
+        <div class="lg:col-span-2 bg-[#101b2d] border border-[#223149] rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-[#223149] pb-4">
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>📋</span> Today's Fitness Routine
+              </h2>
+              <p id="routineSub" class="text-xs text-slate-400 mt-0.5">Complete your profile to generate custom plan</p>
+            </div>
+            <button onclick="switchPage('workouts')" class="text-xs font-bold text-[#35d07f] hover:underline">
+              View Workout Library →
+            </button>
+          </div>
+
+          <div id="dashboardRoutineList" class="space-y-2.5">
+            <!-- Dynamic routines injected here -->
+          </div>
+        </div>
+
+        <!-- Featured Video & Motivation Widget -->
+        <div class="space-y-6">
+          <div class="bg-[#101b2d] border border-[#223149] rounded-2xl p-5 space-y-3">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#35d07f]/10 text-[#35d07f] border border-[#35d07f]/20">
+              Featured Tutorial
+            </span>
+            <h3 class="font-bold text-white text-base">Perfect Squat Form Guide</h3>
+            <p class="text-xs text-slate-400">Master movement mechanics, prevent knee strain, and increase lower body strength.</p>
+            <button onclick="playVideo('squat')" class="w-full py-2.5 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 transition">
+              <span>▶️</span> Watch Quick Form Video
+            </button>
+          </div>
+
+          <div class="bg-[#101b2d] border border-[#223149] rounded-2xl overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80" alt="Gym Motivation" class="w-full h-32 object-cover">
+            <div class="p-4 space-y-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Mindset Tip</span>
+              <p class="text-xs font-medium text-slate-200 italic">"Consistency beats intensity when intensity lacks consistency. Show up daily."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE: WORKOUTS -->
+    <section id="page-workouts" class="page animate-fade-in space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#223149] pb-4">
+        <div>
+          <h2 class="text-2xl font-black text-white">Your Workout Plan</h2>
+          <p class="text-xs text-slate-400 mt-1">Targeted exercises structured for your primary fitness objective</p>
+        </div>
+        <button onclick="openProfileModal()" class="px-4 py-2 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] rounded-xl text-xs font-bold text-slate-200 self-start sm:self-auto transition">
+          ⚙️ Change Fitness Goal
+        </button>
+      </div>
+
+      <div id="workoutListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Workouts rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- PAGE: VIDEO TUTORIALS -->
+    <section id="page-videos" class="page animate-fade-in space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#223149] pb-4">
+        <div>
+          <h2 class="text-2xl font-black text-white flex items-center gap-2">
+            <span>🎬</span> Fitness Suggestion Videos & Guidance
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Curated expert video guides for exercise technique, HIIT workouts, yoga, and nutrition.</p>
+        </div>
+
+        <!-- Video Filter Chips -->
+        <div id="videoFilters" class="flex flex-wrap gap-1.5">
+          <button data-filter="All" class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-[#35d07f] text-[#062012] transition">All Videos</button>
+          <button data-filter="Cardio" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#132238] text-slate-300 border border-[#223149] hover:bg-[#1e3454] transition">Cardio & HIIT</button>
+          <button data-filter="Strength" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#132238] text-slate-300 border border-[#223149] hover:bg-[#1e3454] transition">Strength</button>
+          <button data-filter="Flexibility" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#132238] text-slate-300 border border-[#223149] hover:bg-[#1e3454] transition">Flexibility & Yoga</button>
+          <button data-filter="Nutrition" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-[#132238] text-slate-300 border border-[#223149] hover:bg-[#1e3454] transition">Nutrition</button>
+        </div>
+      </div>
+
+      <!-- Video Grid -->
+      <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Video cards injected via JS -->
+      </div>
+    </section>
+
+    <!-- PAGE: AI COACH -->
+    <section id="page-coach" class="page animate-fade-in space-y-4">
+      <div class="bg-[#101b2d] border border-[#223149] rounded-2xl grid grid-cols-1 lg:grid-cols-4 min-h-[620px] overflow-hidden shadow-2xl">
+        <!-- Coach Side Bar -->
+        <aside class="p-5 border-b lg:border-b-0 lg:border-r border-[#223149] bg-[#0c1626] space-y-5 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#35d07f] to-cyan-500 flex items-center justify-center text-xl shadow-md">
+                🤖
+              </div>
+              <div>
+                <h3 class="font-extrabold text-white text-base">FitBuddy AI</h3>
+                <p id="coachStatus" class="text-xs text-[#35d07f] font-semibold">Ready to help</p>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Your AI Fitness Assistant is synchronized with your profile, goals, and targets. Ask questions about workout routines, nutrition planning, or form corrections.
+            </p>
+
+            <div class="p-3 bg-[#101b2d] border border-[#223149] rounded-xl text-xs space-y-1.5">
+              <div class="font-bold text-slate-300">Active Profile Context:</div>
+              <div id="coachProfileSummary" class="text-slate-400 space-y-1">
+                Loading profile...
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#223149]">
+            <button id="clearChatBtn" class="w-full py-2 px-3 bg-[#132238] hover:bg-red-500/20 hover:text-red-300 border border-[#223149] text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <span>🗑️</span> Clear Chat History
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <div class="lg:col-span-3 flex flex-col justify-between h-[580px] lg:h-[620px] bg-[#08111f]">
+          <!-- Chat Messages Container -->
+          <div id="chatMessages" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 custom-scrollbar">
+            <!-- Messages dynamic -->
+          </div>
+
+          <!-- Quick Suggestion Chips -->
+          <div class="px-4 pt-2 pb-1 bg-[#0c1626] border-t border-[#223149] overflow-x-auto custom-scrollbar flex items-center gap-2 text-xs">
+            <span class="text-slate-400 font-bold whitespace-nowrap">Suggestions:</span>
+            <button onclick="sendQuickPrompt('Suggest a daily meal plan')" class="px-2.5 py-1 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] text-slate-200 rounded-full whitespace-nowrap transition">🥗 Suggest meal plan</button>
+            <button onclick="sendQuickPrompt('How to fix my squat form?')" class="px-2.5 py-1 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] text-slate-200 rounded-full whitespace-nowrap transition">🏋️ Squat form tips</button>
+            <button onclick="sendQuickPrompt('Post-workout recovery guide')" class="px-2.5 py-1 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] text-slate-200 rounded-full whitespace-nowrap transition">💤 Muscle recovery</button>
+            <button onclick="sendQuickPrompt('How much water should I drink?')" class="px-2.5 py-1 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] text-slate-200 rounded-full whitespace-nowrap transition">💧 Hydration advice</button>
+          </div>
+
+          <!-- Chat Input Form -->
+          <form id="chatForm" class="p-3 sm:p-4 bg-[#0c1626] border-t border-[#223149] flex gap-2">
+            <input id="chatInput" type="text" placeholder="Ask AI Coach about exercises, nutrition, recovery..." autocomplete="off" class="flex-1 bg-[#101b2d] border border-[#223149] focus:border-[#35d07f] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none transition">
+            <button type="submit" class="px-5 py-2.5 bg-[#35d07f] hover:bg-[#5ae495] text-[#062012] font-extrabold text-sm rounded-xl transition shadow-md shadow-[#35d07f]/20 flex items-center gap-1.5">
+              <span>Send</span>
+              <span>➔</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL: AUTHENTICATION -->
+<div id="authModal" class="fixed inset-0 z-50 bg-[#02070e]/80 backdrop-blur-md flex items-center justify-center p-4">
+  <div class="bg-[#0e192a] border border-[#223149] rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6">
+    <div class="text-center space-y-2">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#35d07f] to-[#0e8f58] flex items-center justify-center text-3xl mx-auto shadow-lg shadow-[#35d07f]/30">
+        💪
+      </div>
+      <h2 class="text-2xl font-black text-white">Welcome to FitBuddy</h2>
+      <p class="text-xs text-slate-400">Sign in or create a local account to save your workout profile.</p>
+    </div>
+
+    <form id="authForm" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Full Name</label>
+        <input id="authName" type="text" required placeholder="Alex Morgan" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Email Address</label>
+        <input id="authEmail" type="email" required placeholder="alex@example.com" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Password</label>
+        <input id="authPassword" type="password" required minlength="6" placeholder="••••••••" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+      </div>
+
+      <div id="authError" class="p-3 bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl hidden"></div>
+
+      <button type="submit" class="w-full py-3 bg-[#35d07f] hover:bg-[#5ae495] text-[#062012] font-black text-sm rounded-xl transition shadow-lg shadow-[#35d07f]/20">
+        Start Training
+      </button>
+    </form>
+    <p class="text-[11px] text-center text-slate-500">
+      Data is stored safely in your local browser session.
+    </p>
+  </div>
+</div>
+
+<!-- MODAL: FITNESS PROFILE SETUP -->
+<div id="profileModal" class="fixed inset-0 z-50 bg-[#02070e]/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+  <div class="bg-[#0e192a] border border-[#223149] rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-center justify-between border-b border-[#223149] pb-3">
+      <div>
+        <h2 class="text-xl font-extrabold text-white">Fitness Profile Setup</h2>
+        <p class="text-xs text-slate-400">Configure your metrics to generate targets and AI recommendations.</p>
+      </div>
+      <button onclick="closeProfileModal()" class="w-8 h-8 rounded-lg bg-[#132238] text-slate-400 hover:text-white border border-[#223149] flex items-center justify-center transition">✕</button>
+    </div>
+
+    <form id="profileForm" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Age (Years)</label>
+          <input id="age" type="number" min="13" max="100" required placeholder="25" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Weight (kg)</label>
+          <input id="weightInput" type="number" min="25" max="300" step="0.1" required placeholder="70" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Height (cm)</label>
+          <input id="height" type="number" min="100" max="240" required placeholder="175" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Activity Level</label>
+          <select id="activity" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+            <option value="low">Light (Sedentary / Light Walk)</option>
+            <option value="moderate" selected>Moderate (3-4 days exercise)</option>
+            <option value="high">High (5-7 days intense exercise)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Primary Fitness Goal</label>
+        <select id="goalInput" class="w-full bg-[#0b1627] border border-[#223149] focus:border-[#35d07f] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition">
+          <option value="fat-loss">Fat Loss & Toning</option>
+          <option value="muscle-gain">Muscle Gain & Hypertrophy</option>
+          <option value="general">General Fitness & Endurance</option>
+        </select>
+      </div>
+
+      <div id="profileError" class="p-3 bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl hidden"></div>
+
+      <div class="pt-2">
+        <button type="submit" class="w-full py-3 bg-[#35d07f] hover:bg-[#5ae495] text-[#062012] font-extrabold text-sm rounded-xl transition shadow-lg shadow-[#35d07f]/20">
+          Save & Generate Plan
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: VIDEO PLAYER -->
+<div id="videoModal" class="fixed inset-0 z-50 bg-[#02070e]/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+  <div class="bg-[#0e192a] border border-[#223149] rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between border-b border-[#223149] pb-3">
+      <div>
+        <h3 id="videoModalTitle" class="font-extrabold text-white text-lg">Fitness Tutorial</h3>
+        <span id="videoModalCategory" class="text-xs text-[#35d07f] font-semibold">Category</span>
+      </div>
+      <button onclick="closeVideoModal()" class="w-8 h-8 rounded-lg bg-[#132238] text-slate-400 hover:text-white border border-[#223149] flex items-center justify-center transition">✕</button>
+    </div>
+
+    <div id="videoPlayerContainer" class="video-responsive bg-black rounded-xl border border-[#223149]">
+      <!-- iframe dynamic insert -->
+    </div>
+
+    <p id="videoModalDesc" class="text-xs text-slate-300 leading-relaxed"></p>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="fixed bottom-20 md:bottom-6 right-6 z-50 bg-[#102238] border border-[#35d07f]/50 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300">
+  <span id="toastIcon">✅</span>
+  <span id="toastMsg">Notification message</span>
+</div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "fitbuddy_accounts_v3";
+const SESSION_KEY = "fitbuddy_session_v3";
+let account = null;
+
+// Video Database with Embed IDs
+const VIDEO_DATABASE = [
+  {
+    id: "squat",
+    title: "How To Squat Properly (Avoid Mistakes)",
+    category: "Strength",
+    duration: "8 min",
+    youtubeId: "gcNh17Ckjgg",
+    thumbnail: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80",
+    description: "Learn step-by-step cueing for perfect squat execution, foot placement, knee tracking, and depth."
+  },
+  {
+    id: "pushup",
+    title: "Perfect Push-Up Form & Common Errors",
+    category: "Strength",
+    duration: "6 min",
+    youtubeId: "IODxDxX7oi4",
+    thumbnail: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?auto=format&fit=crop&w=800&q=80",
+    description: "Fix flared elbows, lower back sag, and improper hand positions for max chest and tricep activation."
+  },
+  {
+    id: "hiit15",
+    title: "15-Minute Full Body Fat Loss HIIT Workout",
+    category: "Cardio",
+    duration: "15 min",
+    youtubeId: "ml6cT4AZdqI",
+    thumbnail: "https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?auto=format&fit=crop&w=800&q=80",
+    description: "High-intensity interval session designed to burn calories and boost cardiovascular endurance with no equipment."
+  },
+  {
+    id: "yoga_stretch",
+    title: "Full Body Stretch & Mobility for Recovery",
+    category: "Flexibility",
+    duration: "12 min",
+    youtubeId: "g_tea8ZNk5A",
+    thumbnail: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80",
+    description: "Unwind tight hips, shoulders, and spine with guided restorative mobility postures."
+  },
+  {
+    id: "nutrition101",
+    title: "Meal Prep & Protein Targets for Athletes",
+    category: "Nutrition",
+    duration: "10 min",
+    youtubeId: "1p024PZ1fD0",
+    thumbnail: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=80",
+    description: "Essential guide to calculating macronutrients, meal prepping, and timing protein intake."
+  },
+  {
+    id: "core_abs",
+    title: "10-Min Core Stabilization Workout",
+    category: "Strength",
+    duration: "10 min",
+    youtubeId: "dJlFmxiL11s",
+    thumbnail: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
+    description: "Target deep abdominal muscles with plank variations, hollow holds, and controlled rotations."
+  }
+];
+
+const $ = (id) => document.getElementById(id);
+const esc = (str) => String(str ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+function getAccounts() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch (e) { return {}; }
+}
+function saveAccounts(accs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(accs));
+}
+function saveCurrentAccount() {
+  if (!account) return;
+  const accs = getAccounts();
+  accs[account.email.toLowerCase()] = account;
+  saveAccounts(accs);
+}
+
+function showToast(msg, icon = "✅") {
+  const toast = $("toast");
+  $("toastMsg").textContent = msg;
+  $("toastIcon").textContent = icon;
+  toast.classList.remove("translate-y-10", "opacity-0", "pointer-events-none");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => {
+    toast.classList.add("translate-y-10", "opacity-0", "pointer-events-none");
+  }, 2500);
+}
+
+function switchPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const targetPage = $("page-" + pageId);
+  if (targetPage) targetPage.classList.add("active");
+
+  // Synchronize desktop and mobile navigation active states
+  document.querySelectorAll("[data-page]").forEach(btn => {
+    if (btn.dataset.page === pageId) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function completeProfile() {
+  return !!(account && account.profile && account.profile.age && account.profile.weight && account.profile.height && account.profile.goal);
+}
+
+function calculateTargets(p) {
+  const bmr = 10 * p.weight + 6.25 * p.height - 5 * p.age + (p.gender === 'female' ? -161 : 5);
+  const factor = p.activity === "high" ? 1.55 : p.activity === "moderate" ? 1.375 : 1.2;
+  let calories = Math.round(bmr * factor);
+  if (p.goal === "fat-loss") calories -= 350;
+  if (p.goal === "muscle-gain") calories += 300;
+  const protein = Math.round(p.weight * (p.goal === "muscle-gain" ? 2.0 : 1.6));
+  return { calories: Math.max(1200, calories), protein };
+}
+
+function generateWorkoutPlan(goal) {
+  const plans = {
+    "fat-loss": [
+      { id: 1, name: "Brisk Walking / Jogging", sets: "30 Mins", category: "Cardio", done: false, desc: "Sustain heart rate in fat-burn zone." },
+      { id: 2, name: "Goblet Bodyweight Squats", sets: "3 × 15 reps", category: "Strength", done: false, desc: "Keep chest high and push through heels." },
+      { id: 3, name: "Incline Push-Ups", sets: "3 × 12 reps", category: "Strength", done: false, desc: "Maintain flat core line throughout movement." },
+      { id: 4, name: "Plank Hold", sets: "3 × 45 sec", category: "Core", done: false, desc: "Engage glutes and pull belly button to spine." }
+    ],
+    "muscle-gain": [
+      { id: 1, name: "Dumbbell / Barbell Squats", sets: "4 × 8-10 reps", category: "Strength", done: false, desc: "Focus on controlled eccentric lowering phase." },
+      { id: 2, name: "Dumbbell Chest Press", sets: "4 × 8-10 reps", category: "Strength", done: false, desc: "Squeeze upper chest at full extension." },
+      { id: 3, name: "Bent-Over Rows", sets: "3 × 10 reps", category: "Back", done: false, desc: "Pull with elbow drive to hit lats." },
+      { id: 4, name: "Romanian Deadlifts", sets: "3 × 10 reps", category: "Legs", done: false, desc: "Hinge at hips feeling hamstring tension." }
+    ],
+    "general": [
+      { id: 1, name: "Interval Cardio Sprint", sets: "20 Mins", category: "Cardio", done: false, desc: "Alternate 1 min fast jog with 1 min walk." },
+      { id: 2, name: "Bodyweight Air Squats", sets: "3 × 12 reps", category: "Strength", done: false, desc: "Smooth continuous tempo." },
+      { id: 3, name: "Standard Push-Ups", sets: "3 × 10 reps", category: "Strength", done: false, desc: "Full depth chest touch." },
+      { id: 4, name: "Russian Twists", sets: "3 × 20 reps", category: "Core", done: false, desc: "Rotational stability for core endurance." }
+    ]
+  };
+  return plans[goal] || plans["general"];
+}
+
+function render() {
+  if (!account) return;
+
+  $("profileName").textContent = account.name;
+  $("avatar").textContent = (account.name[0] || "?").toUpperCase();
+  $("dashName").textContent = account.name.split(" ")[0];
+
+  const isReady = completeProfile();
+  $("heroActionBtn").textContent = isReady ? "Edit Profile Metrics" : "Complete Profile Setup";
+  $("heroText").textContent = isReady
+    ? `Your personal ${account.profile.goal.replace("-", " ")} plan is active. Track workouts and stay hydrated today!`
+    : "Welcome! Complete your metrics (age, height, weight & goal) to unlock personalized calories, workouts & AI guidance.";
+
+  // Render Water Tracker
+  const waterVal = Number(account.water || 0).toFixed(2);
+  $("waterVal").textContent = waterVal;
+
+  if (!isReady) {
+    $("calories").textContent = "—";
+    $("protein").textContent = "—";
+    $("goal").textContent = "Not Set";
+    $("weight").textContent = "No profile metrics";
+    $("routineSub").textContent = "Complete profile to unlock daily exercises.";
+    $("dashboardRoutineList").innerHTML = `
+      <div class="p-6 text-center border border-dashed border-[#223149] rounded-xl bg-[#0c1626]">
+        <p class="text-sm font-bold text-slate-300">No Routine Generated</p>
+        <p class="text-xs text-slate-400 mt-1">Please configure your fitness metrics to receive daily workouts.</p>
+        <button onclick="openProfileModal()" class="mt-3 px-4 py-2 bg-[#35d07f] text-[#062012] font-bold text-xs rounded-lg">Set Up Profile</button>
+      </div>`;
+    $("workoutListGrid").innerHTML = `
+      <div class="col-span-full p-8 text-center border border-dashed border-[#223149] rounded-2xl bg-[#101b2d]">
+        <p class="text-base font-bold text-slate-200">Workout Library Locked</p>
+        <p class="text-xs text-slate-400 mt-1">Provide your age, weight and target goal to populate customized routines.</p>
+      </div>`;
+    renderCoachContext();
+    renderChat();
+    return;
+  }
+
+  // Active Profile Metrics
+  const targets = calculateTargets(account.profile);
+  $("calories").textContent = targets.calories + " kcal";
+  $("protein").textContent = targets.protein + " g";
+  $("goal").textContent = account.profile.goal.replace("-", " ");
+  $("weight").textContent = `${account.profile.weight} kg · ${account.profile.height} cm`;
+
+  if (!account.routine || account.routine.length === 0) {
+    account.routine = generateWorkoutPlan(account.profile.goal);
+    saveCurrentAccount();
+  }
+
+  // Render Routine on Dashboard
+  const doneCount = account.routine.filter(x => x.done).length;
+  $("routineSub").textContent = `${doneCount} of ${account.routine.length} completed today`;
+
+  $("dashboardRoutineList").innerHTML = account.routine.map((item, idx) => `
+    <div class="flex items-center justify-between p-3 bg-[#0c1626] border border-[#223149] rounded-xl text-xs transition hover:border-[#35d07f]/40">
+      <div class="flex items-center gap-3">
+        <input type="checkbox" ${item.done ? "checked" : ""} onchange="toggleWorkoutDone(${idx})" class="w-4 h-4 accent-[#35d07f] rounded cursor-pointer">
+        <div>
+          <span class="font-bold text-slate-200 ${item.done ? "line-through text-slate-500" : ""}">${esc(item.name)}</span>
+          <span class="block text-[11px] text-slate-400">${esc(item.sets)} · ${esc(item.category)}</span>
+        </div>
+      </div>
+      <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.done ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-800 text-slate-400"}">
+        ${item.done ? "Completed" : "Pending"}
+      </span>
+    </div>
+  `).join("");
+
+  // Render Workout Page Grid
+  $("workoutListGrid").innerHTML = account.routine.map((item, idx) => `
+    <div class="bg-[#101b2d] border border-[#223149] rounded-2xl p-5 space-y-3 card-hover flex flex-col justify-between">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#35d07f]/10 text-[#35d07f] border border-[#35d07f]/20">
+            ${esc(item.category)}
+          </span>
+          <span class="text-xs font-semibold text-slate-400">${esc(item.sets)}</span>
+        </div>
+        <h3 class="font-extrabold text-white text-base">${esc(item.name)}</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">${esc(item.desc)}</p>
+      </div>
+
+      <button onclick="toggleWorkoutDone(${idx})" class="w-full py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 ${item.done ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-[#132238] hover:bg-[#1e3454] text-slate-200 border border-[#223149]'}">
+        <span>${item.done ? '✓ Completed' : 'Mark as Complete'}</span>
+      </button>
+    </div>
+  `).join("");
+
+  renderCoachContext();
+  renderChat();
+}
+
+// Water Intake Controls
+function addWater(amount) {
+  if (!account) return;
+  account.water = Math.min(5.0, Number((account.water || 0) + amount));
+  saveCurrentAccount();
+  render();
+  showToast(`Hydration added: +${amount * 1000}ml`, "💧");
+}
+function resetWater() {
+  if (!account) return;
+  account.water = 0;
+  saveCurrentAccount();
+  render();
+  showToast("Water counter reset", "↺");
+}
+
+function toggleWorkoutDone(index) {
+  if (!account || !account.routine) return;
+  account.routine[index].done = !account.routine[index].done;
+  saveCurrentAccount();
+  render();
+  showToast(account.routine[index].done ? "Exercise completed!" : "Status updated");
+}
+
+// Video Library Rendering & Player
+function renderVideoLibrary(filterCategory = "All") {
+  const container = $("videoGrid");
+  const filtered = filterCategory === "All" 
+    ? VIDEO_DATABASE 
+    : VIDEO_DATABASE.filter(v => v.category === filterCategory);
+
+  container.innerHTML = filtered.map(video => `
+    <div class="bg-[#101b2d] border border-[#223149] rounded-2xl overflow-hidden card-hover flex flex-col justify-between">
+      <div>
+        <div class="relative group cursor-pointer" onclick="playVideo('${video.id}')">
+          <img src="${video.thumbnail}" alt="${esc(video.title)}" class="w-full h-44 object-cover">
+          <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+            <div class="w-12 h-12 rounded-full bg-[#35d07f] text-[#062012] flex items-center justify-center text-xl font-black shadow-lg transform group-hover:scale-110 transition">
+              ▶
+            </div>
+          </div>
+          <span class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold text-white">
+            ${video.duration}
+          </span>
+        </div>
+
+        <div class="p-5 space-y-2">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#35d07f] bg-[#35d07f]/10 px-2.5 py-0.5 rounded-full border border-[#35d07f]/20">
+            ${esc(video.category)}
+          </span>
+          <h3 class="font-extrabold text-white text-base leading-snug">${esc(video.title)}</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">${esc(video.description)}</p>
+        </div>
+      </div>
+
+      <div class="p-5 pt-0">
+        <button onclick="playVideo('${video.id}')" class="w-full py-2.5 bg-[#132238] hover:bg-[#1e3454] border border-[#223149] text-slate-200 font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
+          <span>🎬</span> Watch Tutorial
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function playVideo(videoId) {
+  const video = VIDEO_DATABASE.find(v => v.id === videoId);
+  if (!video) return;
+
+  $("videoModalTitle").textContent = video.title;
+  $("videoModalCategory").textContent = video.category + " • " + video.duration;
+  $("videoModalDesc").textContent = video.description;
+  $("videoPlayerContainer").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${video.youtubeId}?autoplay=1" title="${esc(video.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  
+  $("videoModal").classList.remove("hidden");
+}
+function closeVideoModal() {
+  $("videoModal").classList.add("hidden");
+  $("videoPlayerContainer").innerHTML = "";
+}
+
+// AI Coach Dynamic Logic & Formatting
+function renderCoachContext() {
+  const container = $("coachProfileSummary");
+  if (!completeProfile()) {
+    container.innerHTML = `<span class="text-amber-400">⚠️ Profile setup incomplete. Complete profile to enable context awareness.</span>`;
+    return;
+  }
+  const p = account.profile;
+  const t = calculateTargets(p);
+  container.innerHTML = `
+    <div>• Goal: <strong class="text-slate-200 capitalize">${p.goal.replace("-"," ")}</strong></div>
+    <div>• Target: <strong class="text-slate-200">${t.calories} kcal / ${t.protein}g protein</strong></div>
+    <div>• Water Today: <strong class="text-cyan-400">${(account.water||0).toFixed(2)} L</strong></div>
+  `;
+}
+
+function renderChat() {
+  if (!account) return;
+  const history = account.chat || [];
+  const container = $("chatMessages");
+
+  if (history.length === 0) {
+    const isReady = completeProfile();
+    container.innerHTML = `
+      <div class="bg-[#142237] border border-[#223149] p-4 rounded-2xl max-w-xl text-xs space-y-2 text-slate-200">
+        <div class="font-bold text-[#35d07f] flex items-center gap-2">
+          <span>🤖</span> FitBuddy Coach Initialized
+        </div>
+        <p>${isReady ? `Hello ${esc(account.name)}! I see your goal is set to <strong>${esc(account.profile.goal.replace("-"," "))}</strong>. Ask me anything about your current workout routine, macronutrient distribution, hydration, or technique tips!` : "Hello! Please complete your fitness profile so I can provide customized calorie targets, workout modifications, and dietary advice."}</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = history.map(msg => `
+    <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+      <div class="max-w-[85%] sm:max-w-[75%] p-3.5 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-[#167c4b] text-white rounded-br-none' : 'bg-[#142237] border border-[#223149] text-slate-200 rounded-bl-none'} shadow-md whitespace-pre-wrap">
+        ${esc(msg.text)}
+      </div>
+    </div>
+  `).join("");
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function generateCoachReply(userMsg) {
+  if (!completeProfile()) {
+    return "I'd love to help! However, I need your age, weight, height, and main goal before providing personalized advice. Click 'Complete Profile Setup' on the dashboard first!";
+  }
+
+  const q = userMsg.toLowerCase();
+  const p = account.profile;
+  const t = calculateTargets(p);
+
+  if (q.includes("meal") || q.includes("diet") || q.includes("food") || q.includes("eat")) {
+    return `🥗 **Customized Nutrition Guide (${p.goal.replace("-", " ")})**:\n\n• **Daily Calorie Target**: ~${t.calories} kcal\n• **Protein Target**: ~${t.protein} grams\n\n**Suggested Structure**:\n1. **Breakfast**: 3 scrambled eggs or tofu, whole grain toast, berries.\n2. **Lunch**: Grilled chicken or lentils, brown rice, green vegetables.\n3. **Post-Workout**: Protein smoothie or Greek yogurt.\n4. **Dinner**: Lean protein with roasted sweet potato & broccoli.`;
+  }
+
+  if (q.includes("squat") || q.includes("form") || q.includes("technique")) {
+    return `🏋️ **Squat Form Checklist**:\n\n1. **Stance**: Feet shoulder-width apart, toes pointed slightly outwards (15–30°).\n2. **Bracing**: Inhale into your abdomen and brace your core.\n3. **Hinge**: Initiate movement by pushing hips back before bending knees.\n4. **Depth**: Lower until thighs are parallel to ground.\n5. **Check Video**: Head over to our **Video Library** tab for a complete video walkthrough!`;
+  }
+
+  if (q.includes("water") || q.includes("hydration") || q.includes("drink")) {
+    const logged = (account.water || 0).toFixed(2);
+    return `💧 **Hydration Status**:\n\nYou have logged **${logged} L** out of your daily ~3.0 L goal.\n\n• **Tips**: Drink 500ml upon waking, and consume 250-500ml 30 minutes prior to exercise. Use the quick dashboard water buttons (+250ml) to log your intake!`;
+  }
+
+  if (q.includes("recovery") || q.includes("sore") || q.includes("rest")) {
+    return `💤 **Muscle Recovery Protocol**:\n\n1. **Sleep**: Aim for 7–9 hours for peak muscle protein synthesis.\n2. **Active Recovery**: Gentle 15-minute mobility work or light walking.\n3. **Hydration**: Ensure adequate electrolyte and water consumption.\n4. **Protein**: Hit your target of ~${t.protein}g protein daily.`;
+  }
+
+  return `💪 **Coach Insight**:\n\nFor your current goal of **${p.goal.replace("-", " ")}**, focus on progressive overload and hitting your **${t.calories} kcal** daily target. Feel free to ask about specific exercise forms, hydration, meal planning, or video recommendations!`;
+}
+
+function handleChatSubmit(e) {
+  if (e) e.preventDefault();
+  const input = $("chatInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (!account.chat) account.chat = [];
+  account.chat.push({ role: "user", text });
+  input.value = "";
+  renderChat();
+
+  // Show typing state simulation
+  const messagesContainer = $("chatMessages");
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "flex justify-start text-xs text-slate-400 items-center gap-1.5 p-2";
+  typingDiv.id = "typingIndicator";
+  typingDiv.innerHTML = `
+    <span>AI Coach is typing</span>
+    <span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span>
+  `;
+  messagesContainer.appendChild(typingDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  setTimeout(() => {
+    const indicator = $("typingIndicator");
+    if (indicator) indicator.remove();
+    
+    const reply = generateCoachReply(text);
+    account.chat.push({ role: "bot", text: reply });
+    saveCurrentAccount();
+    renderChat();
+  }, 700);
+}
+
+function sendQuickPrompt(promptText) {
+  $("chatInput").value = promptText;
+  handleChatSubmit();
+}
+
+// Modal Handlers & Auth
+function openProfileModal() {
+  if (!account) return;
+  const p = account.profile || {};
+  $("age").value = p.age || "";
+  $("weightInput").value = p.weight || "";
+  $("height").value = p.height || "";
+  $("activity").value = p.activity || "moderate";
+  $("goalInput").value = p.goal || "fat-loss";
+  $("profileError").classList.add("hidden");
+  $("profileModal").classList.remove("hidden");
+}
+function closeProfileModal() {
+  $("profileModal").classList.add("hidden");
+}
+
+function handleAuthSubmit(e) {
+  e.preventDefault();
+  const name = $("authName").value.trim();
+  const email = $("authEmail").value.trim().toLowerCase();
+  const password = $("authPassword").value;
+  const errorEl = $("authError");
+
+  if (password.length < 6) {
+    errorEl.textContent = "Password must be at least 6 characters.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  const accs = getAccounts();
+  if (accs[email]) {
+    if (accs[email].password !== password) {
+      errorEl.textContent = "Incorrect password for this existing account.";
+      errorEl.classList.remove("hidden");
+      return;
+    }
+    account = accs[email];
+  } else {
+    account = {
+      name,
+      email,
+      password,
+      water: 0,
+      routine: [],
+      chat: [],
+      profile: null
+    };
+    accs[email] = account;
+    saveAccounts(accs);
+  }
+
+  localStorage.setItem(SESSION_KEY, email);
+  $("authModal").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  render();
+  showToast(`Welcome, ${account.name}!`);
+}
+
+function handleProfileSubmit(e) {
+  e.preventDefault();
+  const age = Number($("age").value);
+  const weight = Number($("weightInput").value);
+  const height = Number($("height").value);
+  const activity = $("activity").value;
+  const goal = $("goalInput").value;
+  const errorEl = $("profileError");
+
+  if (!age || !weight || !height) {
+    errorEl.textContent = "Please provide all required metrics.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  account.profile = { age, weight, height, activity, goal };
+  account.routine = generateWorkoutPlan(goal);
+  saveCurrentAccount();
+  closeProfileModal();
+  render();
+  showToast("Profile & fitness plan updated!");
+}
+
+function loadSession() {
+  const sessionEmail = localStorage.getItem(SESSION_KEY);
+  if (sessionEmail) {
+    const accs = getAccounts();
+    if (accs[sessionEmail.toLowerCase()]) {
+      account = accs[sessionEmail.toLowerCase()];
+      $("authModal").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      render();
+      return;
+    }
+  }
+  $("authModal").classList.remove("hidden");
+}
+
+// Event Listeners Initialization
+document.addEventListener("DOMContentLoaded", () => {
+  loadSession();
+  renderVideoLibrary();
+
+  // Navigation Click Handlers
+  document.querySelectorAll("[data-page]").forEach(btn => {
+    btn.addEventListener("click", () => switchPage(btn.dataset.page));
+  });
+
+  // Video Filters
+  document.querySelectorAll("#videoFilters .filter-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll("#videoFilters .filter-btn").forEach(b => {
+        b.classList.remove("bg-[#35d07f]", "text-[#062012]");
+        b.classList.add("bg-[#132238]", "text-slate-300");
+      });
+      e.target.classList.remove("bg-[#132238]", "text-slate-300");
+      e.target.classList.add("bg-[#35d07f]", "text-[#062012]");
+      renderVideoLibrary(e.target.dataset.filter);
+    });
+  });
+
+  $("authForm").addEventListener("submit", handleAuthSubmit);
+  $("profileForm").addEventListener("submit", handleProfileSubmit);
+  $("profileBtn").addEventListener("click", openProfileModal);
+  $("chatForm").addEventListener("submit", handleChatSubmit);
+
+  $("clearChatBtn").addEventListener("click", () => {
+    if (account) {
+      account.chat = [];
+      saveCurrentAccount();
+      renderChat();
+      showToast("Chat history cleared");
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem(SESSION_KEY);
+    location.reload();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeProfileModal();
+      closeVideoModal();
+    }
+  });
+});
+</script>
+</body>
+</html>
